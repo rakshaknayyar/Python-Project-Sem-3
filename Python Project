@@ -1,0 +1,166 @@
+import json
+
+class Student:
+    def __init__(self, name, marks):
+        self.name = name
+        self.marks = marks  # Dictionary to store marks for each subject
+        self.average = self.calculate_average()
+        self.grade = self.calculate_grade()
+
+    def calculate_average(self):
+        # Calculate average marks across all subjects
+        if self.marks:
+            return sum(self.marks.values()) / len(self.marks)
+        return 0
+
+    def calculate_grade(self):
+        # Determine grade based on average marks
+        avg = self.average
+        if avg >= 90:
+            return 'A'
+        elif avg >= 80:
+            return 'B'
+        elif avg >= 70:
+            return 'C'
+        elif avg >= 60:
+            return 'D'
+        else:
+            return 'F'
+
+    def to_dict(self):
+        # Convert the student object to a dictionary for JSON storage
+        return {'name': self.name, 'marks': self.marks, 'average': self.average, 'grade': self.grade}
+
+class StudentMarksManagement:
+    def __init__(self):
+        self.students = {}
+
+    def add_student(self, name, marks):
+        if name in self.students:
+            print(f"Student '{name}' already exists.")
+        else:
+            student = Student(name, marks)
+            self.students[name] = student
+            print(f"Student '{name}' added with marks {marks} and overall grade {student.grade}.")
+
+    def update_marks(self, name, subject, marks):
+        if name in self.students:
+            self.students[name].marks[subject] = marks
+            self.students[name].average = self.students[name].calculate_average()
+            self.students[name].grade = self.students[name].calculate_grade()
+            print(f"Updated marks for '{name}' in {subject} to {marks}. New average: {self.students[name].average:.2f}, Grade: {self.students[name].grade}")
+        else:
+            print(f"Student '{name}' not found.")
+
+    def view_marks(self, name):
+        if name in self.students:
+            student = self.students[name]
+            print(f"Marks for '{name}':")
+            for subject, marks in student.marks.items():
+                print(f"  {subject}: {marks}")
+            print(f"Average Marks: {student.average:.2f}, Grade: {student.grade}")
+        else:
+            print(f"Student '{name}' not found.")
+
+    def delete_student(self, name):
+        if name in self.students:
+            del self.students[name]
+            print(f"Student '{name}' deleted successfully.")
+        else:
+            print(f"Student '{name}' not found.")
+
+    def view_all_students(self):
+        if self.students:
+            print("\nAll Students, Marks, and Grades:")
+            for name, student in self.students.items():
+                print(f"{name}: Marks = {student.marks}, Average = {student.average:.2f}, Grade = {student.grade}")
+        else:
+            print("No students in the system.")
+
+    def calculate_average_marks(self):
+        if self.students:
+            total_marks = sum(student.average for student in self.students.values())
+            average = total_marks / len(self.students)
+            print(f"Overall average marks of all students: {average:.2f}")
+        else:
+            print("No students in the system to calculate the average.")
+
+    def save_to_file(self, filename):
+        data = {name: student.to_dict() for name, student in self.students.items()}
+        with open(filename, 'w') as f:
+            json.dump(data, f, indent=4)
+        print(f"Data saved to {filename}")
+
+    def load_from_file(self, filename):
+        try:
+            with open(filename, 'r') as f:
+                data = json.load(f)
+            self.students = {name: Student(name, info['marks']) for name, info in data.items()}
+            print(f"Data loaded from {filename}")
+        except FileNotFoundError:
+            print(f"File '{filename}' not found.")
+        except json.JSONDecodeError:
+            print("Error decoding JSON data.")
+
+if __name__ == "__main__":
+    system = StudentMarksManagement()
+
+    while True:
+        print("\nStudent Marks Management System")
+        print("1. Add Student")
+        print("2. Update Marks")
+        print("3. View Marks")
+        print("4. Delete Student")
+        print("5. View All Students")
+        print("6. Calculate Average Marks")
+        print("7. Save to File")
+        print("8. Load from File")
+        print("9. Exit")
+
+        choice = input("Enter your choice (1-9): ")
+
+        if choice == '1':
+            name = input("Enter student name: ")
+            marks = {}
+            while True:
+                subject = input("Enter subject (or type 'done' to finish): ")
+                if subject.lower() == 'done':
+                    break
+                score = float(input(f"Enter marks for {subject}: "))
+                marks[subject] = score
+            system.add_student(name, marks)
+
+        elif choice == '2':
+            name = input("Enter student name: ")
+            subject = input("Enter subject: ")
+            marks = float(input(f"Enter updated marks for {subject}: "))
+            system.update_marks(name, subject, marks)
+
+        elif choice == '3':
+            name = input("Enter student name: ")
+            system.view_marks(name)
+
+        elif choice == '4':
+            name = input("Enter student name to delete: ")
+            system.delete_student(name)
+
+        elif choice == '5':
+            system.view_all_students()
+
+        elif choice == '6':
+            system.calculate_average_marks()
+
+        elif choice == '7':
+            filename = input("Enter filename to save data (e.g., 'students.json'): ")
+            system.save_to_file(filename)
+
+        elif choice == '8':
+            filename = input("Enter filename to load data from (e.g., 'students.json'): ")
+            system.load_from_file(filename)
+
+        elif choice == '9':
+            print("Exiting the system.")
+            break
+
+        else:
+            print("Invalid choice. Please enter a number between 1 and 9.")
